@@ -51,5 +51,5 @@ Installation:
 =============
 After downloading or cloning the repo:
 
-* Python: just `pip install -r requirements.txt`
+* Python: just :code:`pip install -r requirements.txt`
 * iOS / Xcode: download the OpenCV framework and link against it in the Xcode project.

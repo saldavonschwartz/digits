@@ -1,0 +1,4 @@
+numpy
+nnkit
+opencv-python
+matplotlib

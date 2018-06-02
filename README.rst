@@ -1,34 +1,40 @@
 Digits: A neural net classifier trained in Python and deployed to iOS via Objective-C++
 =======================================================================================
 
-This project shows how to train and deploy a classifier for handwritten digits.
-For more info on the training procedure see `this article <https://0xfede.io/2018/05/16/digits.html>`_.
+This project shows how to generate and train a series of handwritten digits classifiers in Python and deploy a final model (99% accuracy) in iOS.
+For more info on the training procedure and results see `this article <https://0xfede.io/2018/05/15/digits.html>`_.
 
 The project is divided into 2 parts:
 
-Training and Testing in Python (*python* folder):
--------------------------------------------------
-1. Models were generated for a combination of hyper parameters and topologies.
-2. These models were trained and validated against the `MNIST <http://yann.lecun.com/exdb/mnist/>`_ dataset.
-3. The best 5 models, including intermediates saved through early stopping, were kept and tested.
-4. The best 5 models were further tested with custom images taken with the same camera of the target iOS device. For this step OpenCV was used to extract ROIs.
+Part 1: Training and Testing in Python (*python* folder):
+---------------------------------------------------------
+1. Models were generated for a combination of hyper parameters and topologies and trained on the `MNIST <http://yann.lecun.com/exdb/mnist/>`_ dataset.
+2. The best 5 models were kept and tested both on a portion of the MNIST test set as well as custom images.
+3. A final model was chosen out of the 5 to deploy to iOS.
 
-Due to space considerations, the project contains 2 of the best 5 models, along with the stats for the whole training session of all models.
+Due to space considerations, the project only contains the final model, along with stats for the whole training session of all models.
 
-One of these 2 models achieved a test accuracy of 99.18% but predicted one custom image wrong.
-The other model achieved a test accuracy of 99% but predicted all custom images right and is significantly smaller than the other model.
-Consequently the smaller model was deployed to iOS.
+**Contents:**
+
+- :code:`digits.py`: the entry point for training and testing.
+- :code:`training.py1`: the training algorithm, including topology + hyperparameter search.
+- :code:`testing.py`: testing algorithms for both MNIST as well as custom images, including OpenCV code to preprocess custom images.
+- :code:`statsplot.py`: plotting of training statistics.
+- *data*: the MNIST dataset plus custom images used in testing.
+- *training*: a copy of the the final model and training stats from the session in which the final model as well as many others were generated.
 
 
-Deploying to iOS (*ios* folder):
---------------------------------
-An iOS app was implemented to take pictures and feed them to the trained model.
+Part 2: Deploying to iOS (*ios* folder):
+-----------------------------------------
+An iOS app was implemented to take photographs, preprocess them and run the trained model on them to predict digits.
 
-1. The app takes a picture with the device's camera.
-2. The CG image is converted to an OpenCV matrix and ROIs are extracted as in step 4 of the Python part.
-3. The resulting image is fed to the trained model for prediction.
+**Contents:**
 
-For step 3, a forward-only subset of the Python neural net framework (NNKit) was implemented in C++.
+- :code:`ViewController`: Manages both the UI of the app and an instance of :code:`NNModel` to do all preprocessing and prediction.
+- :code:`NNModel`: The iOS-side model, written in Objective-C++ to interoperate between Cocoa, OpenCV and the trained model.
+- :code:`nn.hpp`, :code:`arithmetic.hpp`, :code:`activation.hpp`: C++ implementation of subset of NNKit (originally written in Python), necessary to use the trained model in iOS.
+- *3rdparty*: C++ libraries used by the NNKit subset.
+
 
 Dependencies:
 =============

@@ -29,7 +29,7 @@ import nnkit as nn
 import numpy as np
 
 
-def trainMNIST(trainingSet, validationSet, epochs, layers, batches, learnRate, keepBest):
+def trainMNIST(trainingSet, validationSet, epochs, layers, batchSizes, learnRates, keepBest):
     """Train and validate models on MNIST with different hyper parameter combinations.
 
     This function trains and validates one model per hyper parameter combination. It then returns
@@ -48,7 +48,7 @@ def trainMNIST(trainingSet, validationSet, epochs, layers, batches, learnRate, k
     :param layers: a list of tuples where each element represents the (hidden unit) size of a layer.
     i.e.: [(10,), (10,20)]
 
-    :param batches: a list of batch sizes to use when training.
+    :param batchSizes: a list of batch sizes to use when training.
     i.e.: [16, 32]
 
     :param learnRate: a list of 2-tuples where the first element is an arbitrary string id and the second element
@@ -63,15 +63,14 @@ def trainMNIST(trainingSet, validationSet, epochs, layers, batches, learnRate, k
     # x = data in (raw pixels), y = one-hot target for loss evaluation:
     x, y = nn.NetVar(), nn.NetVar()
 
-    combinations = product(epochs, layers, batches, learnRate)
+    combinations = product(layers, batchSizes, learnRates)
     validationTarget = np.argmax(validationSet[1].data, axis=1)
     bestQueue = deque(maxlen=keepBest)
     allStats = {}
-    best = None
 
     # Train one model per hyper parameter combination:
-    for epochs, layers, batches, learnRate in combinations:
-        key = str((epochs, layers, batches, learnRate[0]))
+    for layers, batchSize, learnRate in combinations:
+        key = str((epochs, layers, batchSize, learnRate[0]))
         stats = {}
         allStats[key] = stats
 
@@ -104,7 +103,7 @@ def trainMNIST(trainingSet, validationSet, epochs, layers, batches, learnRate, k
             optimizer.learnRate = learnRate[1](epochs, e-1)
 
             # Train:
-            for inputs, targets, i in nn.miniBatch(trainingSet, size=batches):
+            for inputs, targets, i in nn.miniBatch(trainingSet, size=batchSize):
                 x.data, y.data = inputs, targets
                 trainingLoss = net(x)
 

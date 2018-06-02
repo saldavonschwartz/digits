@@ -27,6 +27,8 @@ import nnkit as nn
 import numpy as np
 import cv2 as cv
 
+outputIntermediates = False
+
 
 def testMNIST(model, testSet):
     """Test a model against the MNIST test set.
@@ -57,20 +59,29 @@ def testCustom(model, imgPaths):
     for path in imgPaths:
         # Extract all detected contours from image:
         img = cv.imread(path, cv.CV_8UC4)
+
+        if outputIntermediates:
+            cv.imwrite('7-01-in.png', img)
+
         contours, binary, _ = extractContours(img)
 
         # Create a copy if the image for annotation / display:
         binaryCopy = cv.cvtColor(binary, cv.COLOR_GRAY2BGR)
 
-        for contour in contours:
+        for i, contour in enumerate(contours):
             # Extract ROI and normalize it:
             x, y, w, h = cv.boundingRect(contour)
             roi = binary[y:y + h, x:x + w]
-            roi = normalize(roi)
+
+            if outputIntermediates:
+                cv.imwrite('7-07-{}-roi.png'.format(i), roi)
+
+            roi = normalize(roi, i)
 
             # Make prediction:
             modelIn = roi.flatten() / 255
             modelOut = model(modelIn)
+
             prediction = np.argmax(modelOut)
 
             # Annotate image copy:
@@ -80,9 +91,15 @@ def testCustom(model, imgPaths):
             color = (B, G, R, 255)
 
             cv.rectangle(binaryCopy, (x, y), (x + w, y + h), color, 4)
-            cv.putText(binaryCopy, str(prediction), (x + w // 2 - 10, y + h // 2 + 10), 2, 1, color, 1)
+            cv.putText(binaryCopy, str(prediction),
+                       (x + w // 2 - 10, y + h // 2 + 10), 2, 1, color, 1)
+            cv.putText(binaryCopy, '{:,.2f}'.format(np.max(modelOut)),
+                       (x + w // 2 - 10, y + h // 2 + 40), 2, 1, color, 1)
 
         # Display annotated image:
+        if outputIntermediates:
+            cv.imwrite('7-13-label.png', binaryCopy)
+
         cv.namedWindow(path, cv.WINDOW_NORMAL)
         cv.imshow(path, binaryCopy)
         cv.waitKey()
@@ -101,9 +118,16 @@ def extractContours(colorIn):
     """
     contours = []
 
-    # Filter out some high freqs:
     binaryOut = cv.cvtColor(colorIn, cv.COLOR_BGR2GRAY)
+
+    if outputIntermediates:
+        cv.imwrite('7-02-gray.png', binaryOut)
+
+    # Filter out some high freqs:
     binaryOut = cv.GaussianBlur(binaryOut, (11, 11), 0)
+
+    if outputIntermediates:
+        cv.imwrite('7-03-blur.png', binaryOut)
 
     # Increase contrast:
     binaryOut = np.double(binaryOut)
@@ -115,15 +139,27 @@ def extractContours(colorIn):
 
     binaryOut = np.uint8(binaryOut)
 
-    # Extract contours from binary edges:
+    if outputIntermediates:
+        cv.imwrite('7-04-contrast.png', binaryOut)
+
+    # Make binary inverted (so digits are white):
     _, binaryOut = cv.threshold(255 - binaryOut, 180, 255, cv.THRESH_BINARY)
+
+    if outputIntermediates:
+        cv.imwrite('7-05-binary.png', binaryOut)
+
+    # Extract contours from binary edges:
     edges = cv.Canny(binaryOut, 50, 255)
+
+    if outputIntermediates:
+        cv.imwrite('7-06-canny.png', edges)
+
     _, contours, _ = cv.findContours(edges, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
 
     return contours, binaryOut, edges
 
 
-def normalize(binaryIn):
+def normalize(binaryIn, i):
     """Center an image inside a 20x20 px area and pads it by 4px on each side.
 
     :param binaryIn: a binary image.
@@ -131,6 +167,10 @@ def normalize(binaryIn):
     """
     k = 5, 5
     normOut = cv.dilate(binaryIn, k)
+
+    if outputIntermediates:
+        cv.imwrite('7-08-{}-dilate1.png'.format(i), normOut)
+
     rows, cols = normOut.shape
 
     diff = abs(rows - cols)
@@ -143,7 +183,14 @@ def normalize(binaryIn):
         normOut = cv.copyMakeBorder(normOut, p1, p2, 0, 0, cv.BORDER_CONSTANT, (0,))
 
     normOut = cv.resize(normOut, (20, 20))
+
+    if outputIntermediates:
+        cv.imwrite('7-09-{}-resize20.png'.format(i), normOut)
+
     normOut = cv.copyMakeBorder(normOut, 4, 4, 4, 4, cv.BORDER_CONSTANT)
+
+    if outputIntermediates:
+        cv.imwrite('7-10-{}-pad4.png'.format(i), normOut)
 
     # Center of mass:
     m = cv.moments(normOut)
@@ -158,5 +205,13 @@ def normalize(binaryIn):
 
     T = np.float32([[1, 0, sx], [0, 1, sy]])
     normOut = cv.warpAffine(normOut, T, normOut.shape)
+
+    if outputIntermediates:
+        cv.imwrite('7-11-{}-center.png'.format(i), normOut)
+
     normOut = cv.dilate(normOut, k)
+
+    if outputIntermediates:
+        cv.imwrite('7-12-{}-dilate2.png'.format(i), normOut)
+
     return normOut

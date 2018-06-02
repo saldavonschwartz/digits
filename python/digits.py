@@ -23,25 +23,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""
-This module trains and tests a series of models on the MNIST dataset (http://yann.lecun.com/exdb/mnist/).
-
-The file digits-(100, (300,), 16, '0.99')-86-97.88.model.gz contains the model which
-performed the best, achieving a 99% accuracy in the second 5k examples in the MNIST test set (the first 5k were
-used for validation) and also correctly classified all of the custom images in the data folder.
-
-The file name encoding is:
-. max epochs to train for.
-. 1st hidden layer size, .... nth hidden layer size.
-. batch size.
-. learn rate.
-. actual epoch at which best validation accuracy was achieved. This is the model which was kept.
-. validation accuracy as percentage.
-
-
-The file digits-stats.json contains all stats for all models generated during the training session in which
-the best model was generated.
-"""
 
 import numpy as np
 import nnkit as nn
@@ -87,8 +68,8 @@ def train(trainingSet, validationSet):
     stats, bestModels = training.trainMNIST(
         trainingSet=trainingSet,
         validationSet=validationSet,
-        epochs=[100],
-        layers=[(170,), (300,), (900,), (300, 300), (900, 100), (170, 100, 70), (300, 200,100)],
+        epochs=100,
+        layers=[(170,), (300,), (900,), (300, 300), (900, 100), (170, 100, 70), (300, 200, 100)],
         batches=[16, 32, 128],
         learnRate=[('0.99', lambda epochs, e: 0.99)],
         keepBest=5
@@ -106,7 +87,7 @@ def train(trainingSet, validationSet):
 
 def test(testSetMNIST):
     """Test a model against MNIST test set and custom images."""
-    for path in glob.glob('*.model.gz'):
+    for path in glob.glob('training/*.model.gz'):
         path.replace(".model.gz", "")
 
         model = nn.FFN(*nn.load(path.replace(".model.gz", "")))
@@ -140,4 +121,4 @@ if __name__ == '__main__':
     test(testSet)
 
     # Uncomment to plot a specific model (use filename):
-    # statsplot.plotStats("digits-(100, (300,), 16, '0.99')-86-97.88", 'digits-stats.json')
+    # statsplot.plotStats("(100, (300,), 16, '0.99')", 'digits-stats.json', 100, [], False)

@@ -83,8 +83,8 @@
     auto b = cv::boundingRect(contour);
     auto subroi = binary(b);
     
-    // Normalize similar to MNIST set:
-    subroi = normalizeForMNIST(subroi);
+    // Normalize:
+    subroi = normalize(subroi);
     
     // Make prediction:
     std::vector<float> modelIn;
@@ -165,7 +165,7 @@ std::vector<std::vector<cv::Point>> extractContours(const cv::Mat& colorIn, cv::
     return contours;
 }
 
-cv::Mat normalizeForMNIST(const cv::Mat& binaryIn) {
+cv::Mat normalize(const cv::Mat& binaryIn) {
     cv::Mat k{5,5};
     cv::Mat normOut;
     cv::dilate(binaryIn, normOut, k);

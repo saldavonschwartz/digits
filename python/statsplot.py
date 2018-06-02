@@ -29,26 +29,57 @@ import json
 import re
 
 
-def plotStats(modelPath, statsPath):
+def markEpoch(epoch, epochs, stats, ax1, ax2, best):
+    size = 120 if best else 70
+    alpha = 0.5 if best else 0.3
+
+    stat = stats[str(epoch)]
+
+    ax2.scatter([epoch], [stat[2]], s=size, alpha=alpha, color=(109 / 255, 204 / 255, 218 / 255))
+    ax2.annotate(
+        s='{:,.2f} {}'.format(stat[2], '*BEST*' if best else ""),
+        xy=(epoch + 0.005, stat[2] + 0.005), fontsize=7
+    )
+
+    ax1.scatter([epoch], [stat[1]], s=size, alpha=alpha, color=(255 / 255, 158 / 255, 74 / 255))
+    ax1.annotate(
+        s='{:,.3f}'.format(stat[1]),
+        xy=(epoch + 0.005, stat[1] + 0.005), fontsize=7
+    )
+
+    ax1.scatter([epoch], [stat[0]], s=size  , alpha=alpha, color=(237 / 255, 102 / 255, 93 / 255))
+    ax1.annotate(
+        s='{:,.3f}'.format(stat[0]),
+        xy=(epoch + 0.005, stat[0] + 0.005), fontsize=7
+    )
+
+    ax1.set_xticks(list(ax1.get_xticks()) + [epoch])
+    ax2.set_xticks(list(ax2.get_xticks()) + [epoch])
+    ax1.set_xlim(1, epochs)
+    ax2.set_xlim(1, epochs)
+    ax1.axvline(x=epoch, linewidth=0.5, alpha=alpha)
+
+
+def plotStats(key, statsPath, epochs, extraMarkEpochs, save):
     """Plot training / validation loss plus validation accuracy for a model"""
-
-    match = re.match(r".*-(\(\d+, \(.*\))-(\d+).*", modelPath)
-    key = match.group(1)
-
     with open(statsPath, 'rt') as file:
         stats = json.load(file)[key]
 
-    title = key.replace("(", "").replace(")", "").replace("'", "").replace(",", "-").replace(" ", "").replace("--", "-")
-    epochRange = list(range(1, 101))
+    match = re.match(r"\(\d+, \((.*)\), (\d+), (.*)\).*", key)
+    topology = match.group(1).replace(" ", "-").replace(",", "")
+    batchSize = match.group(2)
+    learnRate = match.group(3).replace("'", "")
+
+    epochRange = list(range(1, epochs+1))
     trainLoss = [stats[str(e)][0] for e in epochRange]
     valLoss = [stats[str(e)][1] for e in epochRange]
     valAccu = [stats[str(e)][2] for e in epochRange]
     lowValLoss = [np.argmin(valLoss) + 1], [np.min(valLoss)]
-    highValAccu = [np.argmax(valAccu) + 1], [np.max(valAccu)]
+    highestValAccu = np.argmax(valAccu) + 1
 
     figure = plt.figure(figsize=(9, 6))
     ax = figure.add_subplot(1, 1, 1)
-    ax.set_xlim(1, 100)
+    ax.set_xlim(1, epochs)
     ax.set_xlabel('epochs')
     ax.set_ylabel('loss')
     ax.set_ylim(0, 0.2)
@@ -68,10 +99,10 @@ def plotStats(modelPath, statsPath):
         label='validation loss', color=(255/255, 158/255, 74/255)
     )[0]
 
-    ax.scatter(*lowValLoss, s=120, alpha=0.5)
+    ax.scatter(*lowValLoss, s=120, alpha=0.5, color=(255 / 255, 158 / 255, 74 / 255))
     ax.annotate(
-        s='epoch: {}\nloss: {:,.3f}'.format(lowValLoss[0][0], lowValLoss[1][0]),
-        xy=(lowValLoss[0][0], lowValLoss[1][0] - 0.01), fontsize=7
+        s='{:,.3f} -LOWEST-'.format(lowValLoss[1][0]),
+        xy=(lowValLoss[0][0] + 0.005, lowValLoss[1][0] + 0.005), fontsize=7
     )
 
     ax2 = ax.twinx()
@@ -84,17 +115,25 @@ def plotStats(modelPath, statsPath):
         label='validation accuracy', color=(109/255, 204/255, 218/255)
     )[0]
 
-    ax2.scatter(*highValAccu, s=120, alpha=0.5)
-    ax2.annotate(
-        s='epoch: {}\naccuracy: {:,.2f}%'.format(highValAccu[0][0], highValAccu[1][0]),
-        xy=(highValAccu[0][0], highValAccu[1][0] + 0.01), fontsize=7
-    )
+    markEpoch(highestValAccu, epochs, stats, ax, ax2, True)
+    for epoch in extraMarkEpochs:
+        markEpoch(epoch, epochs, stats, ax, ax2, False)
 
     ax.legend(
         [p1, p2, p3], [p1.get_label(), p2.get_label(), p3.get_label()],
         loc='lower center', frameon=False, bbox_to_anchor=(0, 1, 1., 1), ncol=3
     )
 
-    plt.title('MNIST Digit Classifier: {}\n\n'.format(title))
+    plt.title('Digits Classifier Stats:\ntopology:{} | batch size: {} | learn rate: {}\n\n'.format(
+        topology, batchSize, learnRate
+    ), fontsize=10)
+
     plt.tight_layout()
-    plt.show(block=True)
+
+    if save:
+        plt.savefig(
+            'plot-t{}-b{}-l{}.svg'.format(topology, batchSize, learnRate),
+            format='svg', dpi=1200, transparent=True
+        )
+    else:
+        plt.show(block=True)

@@ -1,8 +1,8 @@
 Digits: A neural net classifier trained in Python and deployed to iOS via Objective-C++
 =======================================================================================
 
-This project shows how to generate and train a series of handwritten digits classifiers in Python and deploy a final model (99% accuracy) in iOS.
-For more info on the training procedure and results see `this article <https://0xfede.io/2018/05/15/digits.html>`_.
+This project shows how to generate and train a series of handwritten digit classifiers in Python and deploy a final model (99% accuracy) in iOS.
+For more info on the training procedure and results see `this post <https://0xfede.io/2018/05/16/digits.html>`_.
 
 The project is divided into 2 parts:
 
@@ -33,7 +33,7 @@ An iOS app was implemented to take photographs, preprocess them and run the trai
 - :code:`ViewController`: Manages both the UI of the app and an instance of :code:`NNModel` to do all preprocessing and prediction.
 - :code:`NNModel`: The iOS-side model, written in Objective-C++ to interoperate between Cocoa, OpenCV and the trained model.
 - :code:`nn.hpp`, :code:`arithmetic.hpp`, :code:`activation.hpp`: C++ implementation of subset of NNKit (originally written in Python), necessary to use the trained model in iOS.
-- *3rdparty*: C++ libraries used by the NNKit subset.
+- *3rdparty*: C++ libraries used by the NNKit C++ subset.
 
 
 Dependencies:

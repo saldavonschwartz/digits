@@ -47,7 +47,7 @@ def loadMNISTData(path):
         sets.append([data["train_images"], data["train_labels"]])
         sets.append([data["test_images"], data["test_labels"]])
 
-    # Make outsputs into one-hot vectors suitable for a 10 unit softmax layer:
+    # Make outputs into one-hot vectors suitable for a 10 unit softmax layer:
     for s in sets:
         size = s[0].shape[0], 10
         hot = np.zeros(size)
@@ -70,8 +70,8 @@ def train(trainingSet, validationSet):
         validationSet=validationSet,
         epochs=100,
         layers=[(170,), (300,), (900,), (300, 300), (900, 100), (170, 100, 70), (300, 200, 100)],
-        batches=[16, 32, 128],
-        learnRate=[('0.99', lambda epochs, e: 0.99)],
+        batchSizes=[16, 32, 128],
+        learnRates=[('0.99', lambda epochs, e: 0.99)],
         keepBest=5
     )
 

@@ -9,3 +9,4 @@ __pycache__
 dist
 test.py
 ios/Digits/opencv2.framework
+ios/Digits/Digits.xcodeproj/project.xcworkspace/xcuserdata/*

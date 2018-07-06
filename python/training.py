@@ -23,6 +23,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from copy import deepcopy
 from itertools import product
 from collections import deque
 import nnkit as nn
@@ -51,7 +52,7 @@ def trainMNIST(trainingSet, validationSet, epochs, layers, batchSizes, learnRate
     :param batchSizes: a list of batch sizes to use when training.
     i.e.: [16, 32]
 
-    :param learnRate: a list of 2-tuples where the first element is an arbitrary string id and the second element
+    :param learnRates: a list of 2-tuples where the first element is an arbitrary string id and the second element
     is a lambda taking the total number of epochs and the current epoch and returning the learning rate for that epoch.
     i.e.: [('fixed 0.4', lambda epochs, e: 0.4), ('decay-0.4-0.1', lambda epochs, e: nn.decay(e, epochs, (0.1, 0.4)))]
 
@@ -89,7 +90,7 @@ def trainMNIST(trainingSet, validationSet, epochs, layers, batchSizes, learnRate
         topology.extend([
             (nn.Multiply, nn.rand2(layers[i], 10)),
             (nn.Add, nn.rand2(10)),
-            (nn.SoftMax,)
+            (nn.Softmax,)
         ])
 
         net = nn.FFN(*topology)
@@ -108,7 +109,7 @@ def trainMNIST(trainingSet, validationSet, epochs, layers, batchSizes, learnRate
                 trainingLoss = net(x)
 
                 if trainingLoss == float('inf'):
-                    print('e: {} | batch: {}. Vanishing gradient: abort...'.format(e, i + 1))
+                    print('e: {} | batch: {}. Diverged: abort...'.format(e, i + 1))
                     abort = True
                     break
 
@@ -132,12 +133,9 @@ def trainMNIST(trainingSet, validationSet, epochs, layers, batchSizes, learnRate
             # Keep best model so far:
             newBest = False
             if not len(bestQueue) or bestQueue[-1][2] < validationAccuracy:
-                topology = [
-                    [nn.NetVar(np.copy(n.data)) if type(n) is nn.NetVar else n for n in layer]
-                    for layer in net.topology[:-1]
-                ]
-
-                best = (key, e, validationAccuracy, nn.FFN(*topology))
+                bestModel = deepcopy(net)
+                bestModel.topology.pop()
+                best = (key, e, validationAccuracy, bestModel)
                 bestQueue.append(best)
                 newBest = True
 

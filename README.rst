@@ -17,7 +17,7 @@ Due to space considerations, the project only contains the final model, along wi
 **Contents:**
 
 - :code:`digits.py`: the entry point for training and testing.
-- :code:`training.py1`: the training algorithm, including topology + hyperparameter search.
+- :code:`training.py`: the training algorithm, including topology + hyperparameter search.
 - :code:`testing.py`: testing algorithms for both MNIST as well as custom images, including OpenCV code to preprocess custom images.
 - :code:`statsplot.py`: plotting of training statistics.
 - *data*: the MNIST dataset plus custom images used in testing.

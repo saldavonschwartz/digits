@@ -7,6 +7,5 @@ __pycache__
 .DS_Store
 *.egg*
 dist
-test.py
 ios/Digits/opencv2.framework
 ios/Digits/Digits.xcodeproj/project.xcworkspace/xcuserdata/*

@@ -61,9 +61,9 @@ def trainMNIST(trainingSet, validationSet, epochs, layers, batchSizes, learnRate
     :return: a 2-tuple where the first element is a dictionary of training stats for all models and the second element
     is a list of the highest n (keepBest) scoring models.
     """
-    # x = data in (raw pixels), y = one-hot target for loss evaluation:
+    # x = raw pixels, y = one-hot target for loss evaluation:
     x, y = nn.NetVar(), nn.NetVar()
-
+    idx = list(range(len(trainingSet[0])))
     combinations = product(layers, batchSizes, learnRates)
     validationTarget = np.argmax(validationSet[1].data, axis=1)
     bestQueue = deque(maxlen=keepBest)
@@ -101,11 +101,12 @@ def trainMNIST(trainingSet, validationSet, epochs, layers, batchSizes, learnRate
 
         for e in range(1, epochs+1):
             abort = False
-            optimizer.learnRate = learnRate[1](epochs, e-1)
 
             # Train:
-            for inputs, targets, i in nn.miniBatch(trainingSet, size=batchSize):
-                x.data, y.data = inputs, targets
+            np.random.shuffle(idx)
+
+            for i in range(0, len(idx), batchSize):
+                x.data, y.data = trainingSet[0][idx[i:i + batchSize]], trainingSet[1][idx[i:i + batchSize]]
                 trainingLoss = net(x)
 
                 if trainingLoss == float('inf'):
@@ -114,6 +115,7 @@ def trainMNIST(trainingSet, validationSet, epochs, layers, batchSizes, learnRate
                     break
 
                 net.back()
+                optimizer.learnRate = learnRate[1](epochs, e - 1)
                 optimizer.step()
 
             if abort:

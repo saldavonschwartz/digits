@@ -115,7 +115,7 @@ if __name__ == '__main__':
     trainingSet, validationSet, testSet = loadMNISTData('data/mnist.dataset.npz')
 
     # Uncomment to train:
-    # train(trainingSet, validationSet)
+    train(trainingSet, validationSet)
 
     # Uncomment to test:
     test(testSet)

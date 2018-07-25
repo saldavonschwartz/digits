@@ -100,30 +100,23 @@ def trainMNIST(trainingSet, validationSet, epochs, layers, batchSizes, learnRate
         net.topology.append((nn.CELoss, y))
 
         for e in range(1, epochs+1):
-            abort = False
-
-            # Train:
+            # Train on random minibatches:
             np.random.shuffle(idx)
 
             for i in range(0, len(idx), batchSize):
                 x.data, y.data = trainingSet[0][idx[i:i + batchSize]], trainingSet[1][idx[i:i + batchSize]]
                 trainingLoss = net(x)
-
-                if trainingLoss == float('inf'):
-                    print('e: {} | batch: {}. Diverged: abort...'.format(e, i + 1))
-                    abort = True
-                    break
-
                 net.back()
                 optimizer.learnRate = learnRate[1](epochs, e - 1)
                 optimizer.step()
 
-            if abort:
-                break
-
             # Validate:
             x.data, y.data = validationSet[0], validationSet[1]
             validationLoss = net(x)
+
+            if np.isnan(validationLoss):
+                print('numerical instability -- abort --.')
+                break
 
             # Prediction is output of antepenultimate layer,
             # because last layer is loss node during training:
